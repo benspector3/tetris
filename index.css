@@ -1,0 +1,31 @@
+body {
+  background-color: black;
+}
+
+#board {
+  width: 240px;
+  height: 400px;
+}
+
+.arena-square {
+  width: 18px;
+  height: 18px;
+  border: 1px solid grey;
+  display: block;
+  position: absolute;
+}
+
+#score, #paused {
+  color: white;
+  text-align: center;
+}
+
+#player {
+  display: block;
+  position: absolute;
+  user-select: none;
+}
+
+#paused {
+  display: none;
+}
