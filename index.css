@@ -1,8 +1,11 @@
 body {
   background-color: black;
+  overflow: hidden;
 }
 
 #board {
+  position: relative;
+  margin: auto;
   width: 240px;
   height: 400px;
 }
@@ -17,7 +20,7 @@ body {
 
 #score, #paused, #lines {
   color: white;
-  /* text-align: center; */
+  text-align: center;
 }
 
 #player {
@@ -28,4 +31,9 @@ body {
 
 #paused {
   display: none;
+  position: absolute;
+  top: 100px;
+  left: 50%;
+  /* bring your own prefixes */
+  transform: translate(-50%, -50%);
 }
