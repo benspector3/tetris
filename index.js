@@ -111,9 +111,13 @@ function init() {
  */
 var dropCounter = 0;
 var lastTime = 0;
-function update(time = 0) {
-  dropCounter += time - lastTime;
-  lastTime = time;
+function update(timeSinceStart) {
+  if (!timeSinceStart) {
+    timeSinceStart = 0;
+  }
+    
+  dropCounter += timeSinceStart - lastTime;
+  lastTime = timeSinceStart;
 
   // every 1000 ms drop the piece
   if (dropCounter > dropInterval) {
