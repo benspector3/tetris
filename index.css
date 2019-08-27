@@ -15,9 +15,9 @@ body {
   position: absolute;
 }
 
-#score, #paused {
+#score, #paused, #lines {
   color: white;
-  text-align: center;
+  /* text-align: center; */
 }
 
 #player {

@@ -71,6 +71,7 @@ var PIECE_MATRIXES = {
 var board,
     arena,  
     score,
+    lines,
     player,
     dropInterval,
     isPaused;
@@ -87,12 +88,14 @@ function init() {
   // initialize 2D arena
   arena = getEmptyArena();
   
-  // initialize score DOM element and score values
+  // initialize score DOM element and score/lines values
   score = {};
   score.element = $('#score');
   score.points = 0;
-  score.lines = 0;
-  updateScore(0);
+  lines = {};
+  lines.element = $('#lines');
+  lines.count = 0;
+  updateScore();
   
   // initialize the player Values
   player = {};
@@ -436,19 +439,21 @@ function strafe(offset) {
   }
 }
 
-function updateScore(points, lines) {
+function updateScore(points, linesCleared) {
   if (points) {
     score.points += points;
   }
 
   // 1 line = 200 points, 2 lines = 400 points, 3 lines = 800 points, 4 lines = 1600 points 
-  if (lines) {
-    score.points += 100 * Math.pow(2, lines);
-    score.lines += lines;
+  if (linesCleared) {
+    score.points += 100 * Math.pow(2, linesCleared);
+    lines.count += linesCleared;
   }
   
-  score.element.text('lines cleared: ' + score.lines + '\n\n score ' + score.points);
+  score.element.text('score ' + score.points);
+  lines.element.text('lines cleared: ' + lines.count);
 
+  // speed up the game every 5 lines
   if (score.lines % 1 === 5) {
     dropInterval *= .9;
   }
