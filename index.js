@@ -7,6 +7,7 @@
 var SQUARE_SIZE = 20;
 var ROWS = 20;
 var COLUMNS = 12;
+
 var KEY = {
   W: 87,
   Q: 81,
@@ -18,7 +19,7 @@ var KEY = {
   SPACE: 32,
 };
 
-var colors = [
+var COLORS = [
   '#000000',
   '#FF0D72',
   '#0DC2FF',
@@ -29,7 +30,7 @@ var colors = [
   '#3877FF',
 ];
 
-var pieceMatrixes = {
+var PIECE_MATRIXES = {
   'I': [
     [0, 1, 0, 0],
     [0, 1, 0, 0],
@@ -67,38 +68,44 @@ var pieceMatrixes = {
   ],
 };
 
-// HTML jQuery Objects
-var game = {
-  board: $('#board'),
-  width: $('#board').width(),
-  height: $(window).height(),
-  isPaused: false
-}
-
-var player,
-    arena,
+var board,
+    arena,  
     score,
-    dropInterval;
+    player,
+    dropInterval,
+    isPaused;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// GAME SETUP //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 function init() {
-  arena = getEmptyArena();
+  // initialize board DOM element
+  board = {};
+  board.element = $('#board');
 
+  // initialize 2D arena
+  arena = getEmptyArena();
+  
+  // initialize score DOM element and score values
   score = {};
   score.element = $('#score');
   score.points = 0;
   score.lines = 0;
+  updateScore(0);
   
-  dropInterval = 1000;
-  
+  // initialize the player Values
   player = {};
   resetPlayer();
   
+  dropInterval = 1000;
+  isPaused = false
+  
   // turn on keyboard inputs
   $(document).on('keydown', handleKeyDown);
+
+  // request the first Frame
+  requestAnimationFrame(update);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -115,7 +122,7 @@ function update(timeSinceStart) {
   if (!timeSinceStart) {
     timeSinceStart = 0;
   }
-    
+
   dropCounter += timeSinceStart - lastTime;
   lastTime = timeSinceStart;
 
@@ -125,7 +132,7 @@ function update(timeSinceStart) {
   }
   
   // unless the game is paused, on each frame draw the piece and request the next frame
-  if (!game.isPaused) {
+  if (!isPaused) {
     drawPlayerPiece();
     requestAnimationFrame(update);
   }
@@ -164,19 +171,21 @@ function handleKeyDown(event) {
 ////////////////////////////////////////////////////////////////////////////////
 
 function checkCollisions() {
-  for (var r = 0; r < player.piece.length; r++) {
-    for (var c = 0; c < player.piece[r].length; c++) {
-      // if there is an element in the player.piece matrix
-      if (player.piece[r][c].element) {
-        var arenaRow = r + player.row
-        var arenaColumn = c + player.column
+  for (var r = 0; r < player.matrix.length; r++) {
+    for (var c = 0; c < player.matrix[r].length; c++) {
+      // if there is an element in the player.matrix matrix
+      var playerSquare = player.matrix[r][c];
+      
+      if (playerSquare.element) {
 
         // check if the piece has hit the bottom or the sides
+        var arenaRow = r + player.row
+        var arenaColumn = c + player.column
         if (arenaRow === ROWS || arenaColumn >= COLUMNS || arenaColumn < 0) {
           return true;
         }
 
-        // // check the arena for a collision at the row and column
+        // check the arena for a collision at the row and column
         var arenaSquare = arena[arenaRow][arenaColumn];
         if (arenaSquare.value) {
           return true;
@@ -189,37 +198,44 @@ function checkCollisions() {
 
 
 function clearLines() {
-  var points = 100;
+  var linesCleared = 0;
 
+  // find all full rows
   for (var r = ROWS - 1; r >= 0; r--) {
+    // assume each row is full
     var isFullRow = true;
+
+    // if a row has a 0, it is not a full row
     for (var c = 0; c < COLUMNS; c++) {
       if (arena[r][c].value === 0) {
         isFullRow = false;
       }
     }
+
+    // if no 0s were found, the row was full so "remove" it by copying 
+    // the color/value of the row above it. Repeat for all rows above
     if (isFullRow) {
       for (var x = r; x >= 1; x--) {
         for (var y = 0; y < arena[x].length; y++) {
           var value = arena[x - 1][y].value;
-          arena[x][y].element.css('background-color', colors[value]);
           arena[x][y].value = value;
+          arena[x][y].element.css('background-color', COLORS[value]);
         }
       }
+      
+      // don't skip the row directly above the full row 
       r++;
 
-      score.lines++;
-      if (score.lines % 1 === 5) {
-        dropInterval *= .9;
-      }
-      updateScore(points);
-      points *= 2;
+      // count the line
+      linesCleared++;
     }
   }
+
+  updateScore(0, linesCleared);
 }
 
 function drawPlayerPiece() {
-  var piece = player.piece;
+  var piece = player.matrix;
   var row = player.row;
   var column = player.column;
   for (var r = 0; r < piece.length; r++) {
@@ -262,20 +278,24 @@ function fullDrop() {
 }
 
 function getEmptyArena() {
+  // arena is a 2D matrix organized ROWS x COLUMNS
   var arena = [];
+
   for (var r = 0; r < ROWS; r++) {
-    var row = [];
+    arena[r] = [];
 
     for (var c = 0; c < COLUMNS; c++) {
-      var arenaSquare = $('<div>').addClass('arena-square').appendTo(game.board);
-      arenaSquare.css({
+      var props = {
         'left': c * SQUARE_SIZE,
         'top': r * SQUARE_SIZE,
         'background-color': "black"
-      });
-      row.push({element: arenaSquare, value : 0});
+      }
+
+      arena[r][c] = {
+        element: $('<div>').addClass('arena-square').appendTo(board.element).css(props), 
+        value : 0
+      };
     }
-    arena.push(row);
   }
   return arena;
 }
@@ -284,7 +304,7 @@ function getRandomPieceMatrix() {
   var types = 'ILJOZST';
   type = types[Math.floor(Math.random() * types.length)];
 
-  var values = pieceMatrixes[type];
+  var values = PIECE_MATRIXES[type];
   var piece = [];
 
   for (var r = 0; r < values.length; r++) {
@@ -293,8 +313,8 @@ function getRandomPieceMatrix() {
       var value = values[r][c];
       piece[r][c] = {value: value};
       if (value) {
-        pieceSquare = $('<div>').addClass('arena-square').appendTo(game.board);
-        pieceSquare.css('background-color', colors[value]);
+        pieceSquare = $('<div>').addClass('arena-square').appendTo(board.element);
+        pieceSquare.css('background-color', COLORS[value]);
         piece[r][c].element = pieceSquare;
       }
     }
@@ -304,11 +324,11 @@ function getRandomPieceMatrix() {
 }
 
 function pause() {
-  if (!game.isPaused) {
-    game.isPaused = true;
+  if (!isPaused) {
+    isPaused = true;
     $('#paused').toggle();
   } else {
-    game.isPaused = false;
+    isPaused = false;
     $('#paused').toggle();
     update();
   }
@@ -316,12 +336,12 @@ function pause() {
 
 function resetGame() {
   // display the proper score
-  score.element.text(score.left + " : " + score.right);
+  updateScore(0);
 
   // turn off keyboard inputs
   $(document).off();
 
-  game.isPaused = true;
+  isPaused = true;
   
   // restart the game after 500 ms
   setTimeout(function() {
@@ -330,7 +350,7 @@ function resetGame() {
 
     // reset positions of Objects
     init();
-    game.isPaused = false;
+    isPaused = false;
   }, 500);
  
 }
@@ -338,7 +358,7 @@ function resetGame() {
 function resetPlayer() {
   player.row = 0;
   player.column = (COLUMNS / 2) - 1;
-  player.piece = getRandomPieceMatrix();
+  player.matrix = getRandomPieceMatrix();
 }
 
 function rotateMatrix(matrix, dir) {
@@ -371,7 +391,7 @@ function rotateMatrix(matrix, dir) {
 }
 
 function rotatePlayer(dir) {
-  player.piece = rotateMatrix(player.piece, dir);
+  player.matrix = rotateMatrix(player.matrix, dir);
 
   var offset = 1;
   while (checkCollisions()) {
@@ -382,8 +402,8 @@ function rotatePlayer(dir) {
       offset++; 
     }
 
-    if (offset > player.piece.length) {
-      player.piece = rotateMatrix(player.piece, -dir);
+    if (offset > player.matrix.length) {
+      player.matrix = rotateMatrix(player.matrix, -dir);
       return;
     }
   }
@@ -392,13 +412,13 @@ function rotatePlayer(dir) {
 function setPlayerPiece() {
   updateScore(10);
 
-  for (var r = 0; r < player.piece.length; r++) {
-    for (var c = 0; c < player.piece[r].length; c++) {
-      if (player.piece[r][c].element) {
+  for (var r = 0; r < player.matrix.length; r++) {
+    for (var c = 0; c < player.matrix[r].length; c++) {
+      if (player.matrix[r][c].element) {
         var arenaRow = r + player.row;
         var arenaColumn = c + player.column;
         arena[arenaRow][arenaColumn].element.remove();
-        arena[arenaRow][arenaColumn] = player.piece[r][c];
+        arena[arenaRow][arenaColumn] = player.matrix[r][c];
       }
     }
   }
@@ -416,10 +436,22 @@ function strafe(offset) {
   }
 }
 
-function updateScore(points) {
-  score.points += points;
-  score.element.text('lines: ' + score.lines + ' | score ' + score.points);
+function updateScore(points, lines) {
+  if (points) {
+    score.points += points;
+  }
+
+  // 1 line = 200 points, 2 lines = 400 points, 3 lines = 800 points, 4 lines = 1600 points 
+  if (lines) {
+    score.points += 100 * Math.pow(2, lines);
+    score.lines += lines;
+  }
+  
+  score.element.text('lines cleared: ' + score.lines + '\n\n score ' + score.points);
+
+  if (score.lines % 1 === 5) {
+    dropInterval *= .9;
+  }
 }
 
 init();
-update();
