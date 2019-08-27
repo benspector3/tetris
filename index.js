@@ -368,14 +368,19 @@ function rotateMatrix(matrix, dir) {
 
 function rotatePlayer(dir) {
   player.piece = rotateMatrix(player.piece, dir);
-  drawPlayerPiece();
+
   var offset = 1;
   while (checkCollisions()) {
     strafe(offset);
-    drawPlayerPiece();
     offset *= -1;
+    
     if (offset > 0) {
-      offset ++; 
+      offset++; 
+    }
+
+    if (offset > player.piece.length) {
+      player.piece = rotateMatrix(player.piece, -dir);
+      return;
     }
   }
 }
