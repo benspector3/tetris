@@ -68,6 +68,8 @@ var PIECE_MATRIXES = {
   ],
 };
 
+var instructions = "Left and Right Arrow to move \nQ and W (or Up) to rotate \nDown to drop \nSpace to full drop";
+
 var board,
     arena,  
     score,
@@ -103,6 +105,8 @@ function init() {
   
   dropInterval = 1000;
   isPaused = false
+
+  alert(instructions);
   
   // turn on keyboard inputs
   $(document).on('keydown', handleKeyDown);
@@ -181,9 +185,10 @@ function checkCollisions() {
       
       if (playerSquare.element) {
 
+        var arenaRow = r + player.row;
+        var arenaColumn = c + player.column;
+
         // check if the piece has hit the bottom or the sides
-        var arenaRow = r + player.row
-        var arenaColumn = c + player.column
         if (arenaRow === ROWS || arenaColumn >= COLUMNS || arenaColumn < 0) {
           return true;
         }
@@ -338,22 +343,18 @@ function pause() {
 }
 
 function resetGame() {
-  // display the proper score
-  updateScore(0);
-
   // turn off keyboard inputs
   $(document).off();
 
   isPaused = true;
   
+  board.element.empty();
+
+  alert('game over');
+  
   // restart the game after 500 ms
   setTimeout(function() {
-    
-    // anything else you might want to do between points...
-
-    // reset positions of Objects
     init();
-    isPaused = false;
   }, 500);
  
 }
@@ -362,6 +363,9 @@ function resetPlayer() {
   player.row = 0;
   player.column = (COLUMNS / 2) - 1;
   player.matrix = getRandomPieceMatrix();
+  if (checkCollisions()) {
+    resetGame();
+  }
 }
 
 function rotateMatrix(matrix, dir) {
