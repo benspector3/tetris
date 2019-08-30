@@ -7,7 +7,9 @@
 var SQUARE_SIZE = 20;
 var ROWS = 20;
 var COLUMNS = 12;
+var BASE_LINE_POINTS = 100;
 
+var INSTRUCTIONS = "Left and Right Arrow to move \nQ and W (or Up) to rotate \nDown to drop \nSpace to full drop";
 var KEY = {
   W: 87,
   Q: 81,
@@ -68,7 +70,6 @@ var PIECE_MATRIXES = {
   ],
 };
 
-var instructions = "Left and Right Arrow to move \nQ and W (or Up) to rotate \nDown to drop \nSpace to full drop";
 
 var board,
     arena,  
@@ -106,7 +107,7 @@ function init() {
   dropInterval = 1000;
   isPaused = false
 
-  alert(instructions);
+  alert(INSTRUCTIONS);
   
   // turn on keyboard inputs
   $(document).on('keydown', handleKeyDown);
@@ -239,7 +240,7 @@ function clearLines() {
     }
   }
 
-  updateScore(0, linesCleared);
+  updateScore(linesCleared);
 }
 
 function drawPlayerPiece() {
@@ -271,7 +272,6 @@ function dropPiece() {
 }
 
 function fullDrop() {
-  updateScore(20);
   while(!checkCollisions()) {
     player.row++;
   }
@@ -417,8 +417,6 @@ function rotatePlayer(dir) {
 }
 
 function setPlayerPiece() {
-  updateScore(10);
-
   for (var r = 0; r < player.matrix.length; r++) {
     for (var c = 0; c < player.matrix[r].length; c++) {
       if (player.matrix[r][c].element) {
@@ -443,14 +441,10 @@ function strafe(offset) {
   }
 }
 
-function updateScore(points, linesCleared) {
-  if (points) {
-    score.points += points;
-  }
-
-  // 1 line = 200 points, 2 lines = 400 points, 3 lines = 800 points, 4 lines = 1600 points 
+function updateScore(linesCleared) {
+  // 1 line = 500 points, 2 lines = 1000 points, 3 lines = 2000 points, 4 lines = 4000 points 
   if (linesCleared) {
-    score.points += 100 * Math.pow(2, linesCleared);
+    score.points += BASE_LINE_POINTS * Math.pow(2, linesCleared);
     lines.count += linesCleared;
   }
   
