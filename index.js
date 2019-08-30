@@ -452,7 +452,7 @@ function updateScore(linesCleared) {
   lines.element.text('lines cleared: ' + lines.count);
 
   // speed up the game every 5 lines
-  if (score.lines % 1 === 5) {
+  if (score.lines % 5 === 0) {
     dropInterval *= .9;
   }
 }
