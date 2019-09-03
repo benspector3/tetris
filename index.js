@@ -4,11 +4,17 @@
 ///////////////////////// VARIABLE DECLARATIONS ////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 // Constant Variables
-var SQUARE_SIZE = 20;
-var ROWS = 20;
+var COLORS = [
+  '#000000',
+  '#FF0D72',
+  '#0DC2FF',
+  '#0DFF72',
+  '#F538FF',
+  '#FF8E0D',
+  '#FFE138',
+  '#3877FF',
+];
 var COLUMNS = 12;
-var BASE_LINE_POINTS = 100;
-
 var INSTRUCTIONS = "Left and Right Arrow to move \nQ and W (or Up) to rotate \nDown to drop \nSpace to full drop";
 var KEY = {
   W: 87,
@@ -20,18 +26,7 @@ var KEY = {
   P: 80,
   SPACE: 32,
 };
-
-var COLORS = [
-  '#000000',
-  '#FF0D72',
-  '#0DC2FF',
-  '#0DFF72',
-  '#F538FF',
-  '#FF8E0D',
-  '#FFE138',
-  '#3877FF',
-];
-
+var LINE_POINTS = [40, 100, 300, 1200];
 var PIECE_MATRIXES = {
   'I': [
     [0, 1, 0, 0],
@@ -69,7 +64,8 @@ var PIECE_MATRIXES = {
     [0, 0, 0],
   ],
 };
-
+var ROWS = 20;
+var SQUARE_SIZE = 20;
 
 var board,
     arena,  
@@ -442,18 +438,17 @@ function strafe(offset) {
 }
 
 function updateScore(linesCleared) {
-  // 1 line = 500 points, 2 lines = 1000 points, 3 lines = 2000 points, 4 lines = 4000 points 
   if (linesCleared) {
-    score.points += BASE_LINE_POINTS * Math.pow(2, linesCleared);
+    score.points += LINE_POINTS[linesCleared - 1];
+    score.element.text('score ' + score.points);
+    
     lines.count += linesCleared;
-  }
-  
-  score.element.text('score ' + score.points);
-  lines.element.text('lines cleared: ' + lines.count);
+    lines.element.text('lines cleared: ' + lines.count);
 
-  // speed up the game every 5 lines
-  if (lines.count % 5 === 0) {
-    dropInterval *= .9;
+    // speed up the game every 5 lines
+    if (lines.count % 5 === 0) {
+      dropInterval *= .9;
+    }
   }
 }
 
