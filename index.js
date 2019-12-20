@@ -155,6 +155,10 @@ function handleKeyDown(event) {
   
   if (key === KEY.P) {
     pause();
+  } 
+  
+  if (isPaused) {
+    return;
   } else if (key === KEY.LEFT) {
     strafe(-1);
   } else if (key === KEY.RIGHT) {
