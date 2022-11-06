@@ -3,8 +3,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// VARIABLE DECLARATIONS ////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+
+const ROWS = 20;
+const COLUMNS = 12;
+
+// DOM Elements
+const boardElement = $('#board');
+
 // Constant Variables
-var COLORS = [
+const COLORS = [
   '#000000',
   '#FF0D72',
   '#0DC2FF',
@@ -14,9 +22,9 @@ var COLORS = [
   '#FFE138',
   '#3877FF',
 ];
-var COLUMNS = 12;
-var INSTRUCTIONS = "Left and Right Arrow to move \nQ and W (or Up) to rotate \nDown to drop \nSpace to full drop";
-var KEY = {
+
+const INSTRUCTIONS = "Left and Right Arrow to move \nQ and W (or Up) to rotate \nDown to drop \nSpace to full drop";
+const KEY = {
   W: 87,
   Q: 81,
   LEFT: 37,
@@ -26,8 +34,67 @@ var KEY = {
   P: 80,
   SPACE: 32,
 };
-var LINE_POINTS = [40, 100, 300, 1200];
-var PIECE_MATRIXES = {
+const PIECES = {
+  'I': {
+    color: '',
+    matrix: [
+      [0, 1, 0, 0],
+      [0, 1, 0, 0],
+      [0, 1, 0, 0],
+      [0, 1, 0, 0],
+    ]
+  },
+  'L': {
+    color: '',
+    matrix: [
+      [0, 2, 0],
+      [0, 2, 0],
+      [0, 2, 2],
+    ]
+  },
+  'J': {
+    color: '',
+    matrix: [
+      [0, 3, 0],
+      [0, 3, 0],
+      [3, 3, 0],
+    ]
+  },
+  'O': {
+    color: '',
+    matrix: [
+      [4, 4],
+      [4, 4],
+    ]
+  },
+  'Z': {
+    color: '',
+    matrix: [
+      [5, 5, 0],
+      [0, 5, 5],
+      [0, 0, 0],
+    ]
+  },
+  'S': {
+    color: '',
+    matrix: [
+      [0, 6, 6],
+      [6, 6, 0],
+      [0, 0, 0],
+    ]
+  },
+  'T': {
+    color: '',
+    matrix: [
+      [0, 7, 0],
+      [7, 7, 7],
+      [0, 0, 0],
+    ]
+  },
+}
+const LINE_POINTS = [40, 100, 300, 1200];
+const PIECE_TYPES = 'ILJOZST';
+const PIECE_MATRIXES = {
   'I': [
     [0, 1, 0, 0],
     [0, 1, 0, 0],
@@ -64,28 +131,62 @@ var PIECE_MATRIXES = {
     [0, 0, 0],
   ],
 };
-var ROWS = 20;
-var SQUARE_SIZE = 20;
 
-var board,
-    arena,  
-    score,
-    lines,
-    player,
-    dropInterval,
-    isPaused;
+
+let arena,  
+score,
+lines,
+currentPiece,
+dropInterval,
+isPaused;
+
+addEventListener('resize', resize)
+
+function resize() {
+  console.log($(window).height())
+  boardElement.css({
+    "height": getBoardHeight(),
+    "width": getBoardWidth()
+  })
+
+  if (arena) {
+    for (let r = 0; r < arena.length; r++) {
+      for (let c = 0; c < arena[r].length; c++) {
+
+        arena[r][c].element.css({
+          'width': getSquareSize(),
+          'height': getSquareSize(),
+          'left': c * getSquareSize(),
+          'top': r * getSquareSize(),
+        })
+      }
+    }
+  }
+  if (currentPiece){
+    drawPlayerPiece();
+  }
+}
+
+function getBoardHeight() {
+  return $(window).height() * 0.6;
+}
+
+function getSquareSize() {
+  return getBoardHeight() / ROWS
+}
+
+function getBoardWidth() {
+  return getSquareSize() * COLUMNS;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// GAME SETUP //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 function init() {
-  // initialize board DOM element
-  board = {};
-  board.element = $('#board');
-
   // initialize 2D arena
   arena = getEmptyArena();
+  resize();
   
   // initialize score DOM element and score/lines values
   score = {};
@@ -96,8 +197,8 @@ function init() {
   lines.count = 0;
   updateScore();
   
-  // initialize the player Values
-  player = {};
+  // initialize the currentPiece Values
+  currentPiece = {};
   resetPlayer();
   
   dropInterval = 1000;
@@ -107,6 +208,9 @@ function init() {
   
   // turn on keyboard inputs
   $(document).on('keydown', handleKeyDown);
+  $(document).on('touchstart', handleTouchStart)
+  $(document).on('touchend', handleTouchEnd)
+  $(document).on('touchmove', handleTouchMove)
 
   // request the first Frame
   requestAnimationFrame(update);
@@ -120,8 +224,8 @@ function init() {
  * On each update tick update each bubble's position and check for
  * collisions with the walls.
  */
-var dropCounter = 0;
-var lastTime = 0;
+let dropCounter = 0;
+let lastTime = 0;
 function update(timeSinceStart) {
   if (!timeSinceStart) {
     timeSinceStart = 0;
@@ -151,7 +255,7 @@ event.which returns the keycode of the key that is pressed when the
 keydown event occurs
 */
 function handleKeyDown(event) {
-  var key = event.which;
+  const key = event.which;
   
   if (key === KEY.P) {
     pause();
@@ -174,20 +278,74 @@ function handleKeyDown(event) {
   } 
 }
 
+let xDown, yDown;
+
+function handleTouchStart(evt) {                            
+  xDown = evt.originalEvent.touches[0].clientX;                                      
+  yDown = evt.originalEvent.touches[0].clientY;                                      
+};          
+
+function handleTouchEnd(evt) {
+  
+  if (xDown || yDown) {
+    rotatePlayer(1);
+  }
+  xDown = null;
+  yDown = null;
+}
+
+function handleTouchMove(evt) {                             
+  if ( ! xDown || ! yDown ) {
+      return;
+  }
+  var xUp = evt.originalEvent.touches[0].clientX;                                    
+  var yUp = evt.originalEvent.touches[0].clientY;
+
+  var xDiff = xDown - xUp;
+  var yDiff = yDown - yUp;
+
+  /* choose the most significant */
+  if ( Math.abs( xDiff ) > Math.abs( yDiff ) ) {
+
+    if (xDiff > 0) {
+      /* swipe left */
+      strafe(-1);
+    } else {
+      /* swipe right */
+      strafe(1);
+    }
+
+  }
+  else {
+    if (yDiff > 0) {
+      /* swipe up */
+      fullDrop();
+    } else {
+      /* swipe down */
+      dropPiece();
+    }
+  }
+  
+  /* reset values */
+  xDown = null;
+  yDown = null;                                             
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////// HELPER FUNCTIONS ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 function checkCollisions() {
-  for (var r = 0; r < player.matrix.length; r++) {
-    for (var c = 0; c < player.matrix[r].length; c++) {
-      // if there is an element in the player.matrix matrix
-      var playerSquare = player.matrix[r][c];
+  for (let r = 0; r < currentPiece.matrix.length; r++) {
+    for (let c = 0; c < currentPiece.matrix[r].length; c++) {
+      // if there is an element in the currentPiece.matrix matrix
+      const playerSquare = currentPiece.matrix[r][c];
       
       if (playerSquare.element) {
 
-        var arenaRow = r + player.row;
-        var arenaColumn = c + player.column;
+        const arenaRow = r + currentPiece.row;
+        const arenaColumn = c + currentPiece.column;
 
         // check if the piece has hit the bottom or the sides
         if (arenaRow === ROWS || arenaColumn >= COLUMNS || arenaColumn < 0) {
@@ -195,7 +353,7 @@ function checkCollisions() {
         }
 
         // check the arena for a collision at the row and column
-        var arenaSquare = arena[arenaRow][arenaColumn];
+        const arenaSquare = arena[arenaRow][arenaColumn];
         if (arenaSquare.value) {
           return true;
         }
@@ -207,15 +365,15 @@ function checkCollisions() {
 
 
 function clearLines() {
-  var linesCleared = 0;
+  let linesCleared = 0;
 
   // find all full rows
-  for (var r = ROWS - 1; r >= 0; r--) {
+  for (let r = ROWS - 1; r >= 0; r--) {
     // assume each row is full
-    var isFullRow = true;
+    let isFullRow = true;
 
     // if a row has a 0, it is not a full row
-    for (var c = 0; c < COLUMNS; c++) {
+    for (let c = 0; c < COLUMNS; c++) {
       if (arena[r][c].value === 0) {
         isFullRow = false;
       }
@@ -224,9 +382,9 @@ function clearLines() {
     // if no 0s were found, the row was full so "remove" it by copying 
     // the color/value of the row above it. Repeat for all rows above
     if (isFullRow) {
-      for (var x = r; x >= 1; x--) {
-        for (var y = 0; y < arena[x].length; y++) {
-          var value = arena[x - 1][y].value;
+      for (let x = r; x >= 1; x--) {
+        for (let y = 0; y < arena[x].length; y++) {
+          const value = arena[x - 1][y].value;
           arena[x][y].value = value;
           arena[x][y].element.css('background-color', COLORS[value]);
         }
@@ -244,15 +402,17 @@ function clearLines() {
 }
 
 function drawPlayerPiece() {
-  var piece = player.matrix;
-  var row = player.row;
-  var column = player.column;
-  for (var r = 0; r < piece.length; r++) {
-    for (var c = 0; c < piece[r].length; c++) {
+  const piece = currentPiece.matrix;
+  const row = currentPiece.row;
+  const column = currentPiece.column;
+  for (let r = 0; r < piece.length; r++) {
+    for (let c = 0; c < piece[r].length; c++) {
       if (piece[r][c].element) {
         piece[r][c].element.css({
-          'left': (c + column) * SQUARE_SIZE,
-          'top': (r + row) * SQUARE_SIZE,
+          'width': getSquareSize(),
+          'height': getSquareSize(),
+          'left': (c + column) * getSquareSize(),
+          'top': (r + row) * getSquareSize(),
         });
       }
     }
@@ -260,10 +420,10 @@ function drawPlayerPiece() {
 }
 
 function dropPiece() {
-  player.row++;
+  currentPiece.row++;
 
   if (checkCollisions()) {
-    player.row--;
+    currentPiece.row--;
     setPlayerPiece();
     resetPlayer();
   }
@@ -273,9 +433,9 @@ function dropPiece() {
 
 function fullDrop() {
   while(!checkCollisions()) {
-    player.row++;
+    currentPiece.row++;
   }
-  player.row--;
+  currentPiece.row--;
 
   drawPlayerPiece(); // might not need this
 
@@ -287,48 +447,58 @@ function fullDrop() {
 
 function getEmptyArena() {
   // arena is a 2D matrix organized ROWS x COLUMNS
-  var arena = [];
+  const arena = [];
 
-  for (var r = 0; r < ROWS; r++) {
+  for (let r = 0; r < ROWS; r++) {
     arena[r] = [];
 
-    for (var c = 0; c < COLUMNS; c++) {
-      var props = {
-        'left': c * SQUARE_SIZE,
-        'top': r * SQUARE_SIZE,
+    for (let c = 0; c < COLUMNS; c++) {
+      const additionalProps = {
+        'left': c * getSquareSize(),
+        'top': r * getSquareSize(),
         'background-color': "black"
       }
-
-      arena[r][c] = {
-        element: $('<div>').addClass('arena-square').appendTo(board.element).css(props), 
-        value : 0
-      };
+      const emptyArenaSquare = makeArenaSquare(additionalProps);
+      arena[r][c] = { element: emptyArenaSquare, value : 0 };
     }
   }
   return arena;
 }
 
 function getRandomPieceMatrix() {
-  var types = 'ILJOZST';
-  type = types[Math.floor(Math.random() * types.length)];
+  type = PIECE_TYPES[Math.floor(Math.random() * PIECE_TYPES.length)];
 
-  var values = PIECE_MATRIXES[type];
-  var piece = [];
+  const values = PIECE_MATRIXES[type];
+  const piece = [];
 
-  for (var r = 0; r < values.length; r++) {
+  for (let r = 0; r < values.length; r++) {
     piece[r] = [];
-    for (var c = 0; c < values[r].length; c++) {
-      var value = values[r][c];
+    for (let c = 0; c < values[r].length; c++) {
+      const value = values[r][c];
       piece[r][c] = {value: value};
       if (value) {
-        pieceSquare = $('<div>').addClass('arena-square').appendTo(board.element);
-        pieceSquare.css('background-color', COLORS[value]);
+        const additionalProps = { 'background-color': COLORS[value] };
+        pieceSquare = makeArenaSquare(additionalProps);
         piece[r][c].element = pieceSquare;
       }
     }
   }
 
   return piece;
+}
+
+function makeArenaSquare(additionalProps) {
+  const props = {
+    'width': getSquareSize(),
+    'height': getSquareSize(),
+    ...additionalProps
+  }
+  pieceSquare = $('<div>')
+    .addClass('arena-square')
+    .css(props)
+    .appendTo(boardElement);
+
+  return pieceSquare;
 }
 
 function pause() {
@@ -348,7 +518,7 @@ function resetGame() {
 
   isPaused = true;
   
-  board.element.empty();
+  boardElement.empty();
 
   alert('game over');
   
@@ -360,9 +530,9 @@ function resetGame() {
 }
 
 function resetPlayer() {
-  player.row = 0;
-  player.column = (COLUMNS / 2) - 1;
-  player.matrix = getRandomPieceMatrix();
+  currentPiece.row = 0;
+  currentPiece.column = (COLUMNS / 2) - 1;
+  currentPiece.matrix = getRandomPieceMatrix();
   if (checkCollisions()) {
     resetGame();
   }
@@ -370,10 +540,10 @@ function resetPlayer() {
 
 function rotateMatrix(matrix, dir) {
   // transpose:
-  var newMatrix = [];
-  for (var r = 0; r < matrix.length; r++) {
+  const newMatrix = [];
+  for (let r = 0; r < matrix.length; r++) {
     newMatrix[r] = [];
-    for (var c = 0; c < matrix[r].length; c++) {
+    for (let c = 0; c < matrix[r].length; c++) {
       newMatrix[r][c] = matrix[c][r];
     }
   }
@@ -382,7 +552,7 @@ function rotateMatrix(matrix, dir) {
 
   // rotate right by reversing the matrix columns (reverse each value in each row)
   if (dir === 1) {
-    for (var r = 0; r < matrix.length; r++) {
+    for (let r = 0; r < matrix.length; r++) {
       matrix[r].reverse();
     }     
     return matrix;
@@ -398,9 +568,9 @@ function rotateMatrix(matrix, dir) {
 }
 
 function rotatePlayer(dir) {
-  player.matrix = rotateMatrix(player.matrix, dir);
+  currentPiece.matrix = rotateMatrix(currentPiece.matrix, dir);
 
-  var offset = 1;
+  let offset = 1;
   while (checkCollisions()) {
     strafe(offset);
     offset *= -1;
@@ -409,21 +579,23 @@ function rotatePlayer(dir) {
       offset++; 
     }
 
-    if (offset > player.matrix.length) {
-      player.matrix = rotateMatrix(player.matrix, -dir);
+    if (offset > currentPiece.matrix.length) {
+      currentPiece.matrix = rotateMatrix(currentPiece.matrix, -dir);
       return;
     }
   }
 }
 
 function setPlayerPiece() {
-  for (var r = 0; r < player.matrix.length; r++) {
-    for (var c = 0; c < player.matrix[r].length; c++) {
-      if (player.matrix[r][c].element) {
-        var arenaRow = r + player.row;
-        var arenaColumn = c + player.column;
+  for (let r = 0; r < currentPiece.matrix.length; r++) {
+    for (let c = 0; c < currentPiece.matrix[r].length; c++) {
+      if (currentPiece.matrix[r][c].element) {
+        const arenaRow = r + currentPiece.row;
+        const arenaColumn = c + currentPiece.column;
+
+        // replace the existing piece in the arena with the currentPiece
         arena[arenaRow][arenaColumn].element.remove();
-        arena[arenaRow][arenaColumn] = player.matrix[r][c];
+        arena[arenaRow][arenaColumn] = currentPiece.matrix[r][c];
       }
     }
   }
@@ -435,9 +607,9 @@ function setPlayerPiece() {
 // into one allowed for simpler code AND the ability to easily wiggle the piece
 // back onto the board when we rotate a piece into either the walls or another piece
 function strafe(offset) {
-  player.column += offset;
+  currentPiece.column += offset;
   if (checkCollisions()) {
-    player.column -= offset;;
+    currentPiece.column -= offset;;
   }
 }
 
