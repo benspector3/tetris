@@ -13,7 +13,7 @@ html, body {
 }
 
 body > * {
-  margin-top: 2em;
+  margin-top: 1.5em;
 }
 
 body {
@@ -29,7 +29,6 @@ body {
 
 #board {
   position: relative;
-  display: none;
 }
 
 .arena-square {
@@ -59,20 +58,24 @@ footer {
   gap: 0.5em;
 }
 
-#play, #paused {
+button, #paused {
   padding: 0.5rem 5rem;
   border-radius: 5px;
   border: none;
   
   background: #883677;
-  opacity: 0.9;
+
   color: inherit;
   font-size: 1.5rem;
   text-align: center;
-
+  
   box-shadow: 2px 2px 2px 1px rgb(0 0 255 / 20%)
 }
 
-#play:hover {
+#play, #paused, #pause {
+  opacity: 0.9;
+}
+
+#play:hover, #pause:hover {
   opacity: 1;
 }

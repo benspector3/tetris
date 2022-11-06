@@ -12,7 +12,7 @@ const COLUMNS = 12;
 const boardElement = $('#board');
 const playButton = $('#play');
 const gameInfo = $('#game-info')
-boardElement.hide();
+
 gameInfo.hide();
 
 // Constant Variables
@@ -39,64 +39,6 @@ const KEY = {
   P: 80,
   SPACE: 32,
 };
-const PIECES = {
-  'I': {
-    color: '',
-    matrix: [
-      [0, 1, 0, 0],
-      [0, 1, 0, 0],
-      [0, 1, 0, 0],
-      [0, 1, 0, 0],
-    ]
-  },
-  'L': {
-    color: '',
-    matrix: [
-      [0, 2, 0],
-      [0, 2, 0],
-      [0, 2, 2],
-    ]
-  },
-  'J': {
-    color: '',
-    matrix: [
-      [0, 3, 0],
-      [0, 3, 0],
-      [3, 3, 0],
-    ]
-  },
-  'O': {
-    color: '',
-    matrix: [
-      [4, 4],
-      [4, 4],
-    ]
-  },
-  'Z': {
-    color: '',
-    matrix: [
-      [5, 5, 0],
-      [0, 5, 5],
-      [0, 0, 0],
-    ]
-  },
-  'S': {
-    color: '',
-    matrix: [
-      [0, 6, 6],
-      [6, 6, 0],
-      [0, 0, 0],
-    ]
-  },
-  'T': {
-    color: '',
-    matrix: [
-      [0, 7, 0],
-      [7, 7, 7],
-      [0, 0, 0],
-    ]
-  },
-}
 const LINE_POINTS = [40, 100, 300, 1200];
 const PIECE_TYPES = 'ILJOZST';
 const PIECE_MATRIXES = {
@@ -145,56 +87,18 @@ currentPiece,
 dropInterval,
 isPaused;
 
-addEventListener('resize', resize)
-
-function resize() {
-  console.log($(window).height())
-  boardElement.css({
-    "height": getBoardHeight(),
-    "width": getBoardWidth()
-  })
-
-  if (arena) {
-    for (let r = 0; r < arena.length; r++) {
-      for (let c = 0; c < arena[r].length; c++) {
-
-        arena[r][c].element.css({
-          'width': getSquareSize(),
-          'height': getSquareSize(),
-          'left': c * getSquareSize(),
-          'top': r * getSquareSize(),
-        })
-      }
-    }
-  }
-  if (currentPiece){
-    drawPlayerPiece();
-  }
-}
-
-function getBoardHeight() {
-  return $(window).height() * 0.6;
-}
-
-function getSquareSize() {
-  return getBoardHeight() / ROWS
-}
-
-function getBoardWidth() {
-  return getSquareSize() * COLUMNS;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// GAME SETUP //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-function init() {
-  playButton.hide();
-  boardElement.show();
-  gameInfo.show();
+init();
 
+function init() {
   // initialize 2D arena
   arena = getEmptyArena();
+
+  // Turn on resizing
+  addEventListener('resize', resize)
   resize();
   
   // initialize score DOM element and score/lines values
@@ -208,23 +112,27 @@ function init() {
   
   // initialize the currentPiece Values
   currentPiece = {};
-  resetPlayer();
   
   dropInterval = 1000;
   isPaused = false
+}
 
-  alert(INSTRUCTIONS);
+function startGame() {
+  alert(INSTRUCTIONS);  
   
+  playButton.hide();
+  gameInfo.show();
+
   // turn on keyboard inputs
   $(document).on('keydown', handleKeyDown);
-  $(document).on('touchstart', handleTouchStart)
-  $(document).on('touchend', handleTouchEnd)
-  $(document).on('touchmove', handleTouchMove)
+  $(document).on('touchstart', handleTouchStart);
+  $(document).on('touchend', handleTouchEnd);
+  $(document).on('touchmove', handleTouchMove);
+
+  resetPlayer();
 
   // request the first Frame
   requestAnimationFrame(update);
-
-  
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -291,13 +199,19 @@ function handleKeyDown(event) {
 
 let xDown, yDown;
 
-function handleTouchStart(evt) {                            
+function handleTouchStart(evt) {     
+  if (isPaused) {
+    return;
+  }                       
   xDown = evt.originalEvent.touches[0].clientX;                                      
   yDown = evt.originalEvent.touches[0].clientY;                                      
 };          
 
 function handleTouchEnd(evt) {
-  
+  if (isPaused) {
+    return;
+  }
+
   if (xDown || yDown) {
     rotatePlayer(1);
   }
@@ -305,8 +219,12 @@ function handleTouchEnd(evt) {
   yDown = null;
 }
 
-function handleTouchMove(evt) {                             
-  if ( ! xDown || ! yDown ) {
+function handleTouchMove(evt) {   
+  if (isPaused) {
+    return;
+  }  
+
+  if ( !xDown || !yDown ) {
       return;
   }
   var xUp = evt.originalEvent.touches[0].clientX;                                    
@@ -637,4 +555,42 @@ function updateScore(linesCleared) {
       dropInterval *= .9;
     }
   }
+}
+
+
+/// RESIZING
+function resize() {
+  boardElement.css({
+    "height": getBoardHeight(),
+    "width": getBoardWidth()
+  })
+
+  if (arena) {
+    for (let r = 0; r < arena.length; r++) {
+      for (let c = 0; c < arena[r].length; c++) {
+
+        arena[r][c].element.css({
+          'width': getSquareSize(),
+          'height': getSquareSize(),
+          'left': c * getSquareSize(),
+          'top': r * getSquareSize(),
+        })
+      }
+    }
+  }
+  if (currentPiece){
+    drawPlayerPiece();
+  }
+}
+
+function getBoardHeight() {
+  return $(window).height() * 0.6;
+}
+
+function getSquareSize() {
+  return getBoardHeight() / ROWS
+}
+
+function getBoardWidth() {
+  return getSquareSize() * COLUMNS;
 }
