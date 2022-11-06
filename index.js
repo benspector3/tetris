@@ -10,6 +10,10 @@ const COLUMNS = 12;
 
 // DOM Elements
 const boardElement = $('#board');
+const playButton = $('#play');
+const gameInfo = $('#game-info')
+boardElement.hide();
+gameInfo.hide();
 
 // Constant Variables
 const COLORS = [
@@ -23,7 +27,8 @@ const COLORS = [
   '#3877FF',
 ];
 
-const INSTRUCTIONS = "Left and Right Arrow to move \nQ and W (or Up) to rotate \nDown to drop \nSpace to full drop";
+const INSTRUCTIONS = "Keyboard: \nLeft and Right Arrow to move \nQ and W (or Up) to rotate \nDown to drop \nSpace to full drop\n\n" 
+  + "Mobile: \nSwipe left or right to move\nTap to rotate\nSwipe down to move down\nSwipe up to drop";
 const KEY = {
   W: 87,
   Q: 81,
@@ -184,6 +189,10 @@ function getBoardWidth() {
 ////////////////////////////////////////////////////////////////////////////////
 
 function init() {
+  playButton.hide();
+  boardElement.show();
+  gameInfo.show();
+
   // initialize 2D arena
   arena = getEmptyArena();
   resize();
@@ -214,6 +223,8 @@ function init() {
 
   // request the first Frame
   requestAnimationFrame(update);
+
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -627,5 +638,3 @@ function updateScore(linesCleared) {
     }
   }
 }
-
-init();

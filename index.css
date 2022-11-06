@@ -16,12 +16,11 @@ body > * {
   margin-top: 2em;
 }
 
-header {
-  color: white;
-}
-
 body {
-  background-color: black;
+  background-color: #441151;
+  color: #FF958C;
+  text-align: center;
+
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -30,18 +29,13 @@ body {
 
 #board {
   position: relative;
-  display: flex;
+  display: none;
 }
 
 .arena-square {
   border: 1px solid grey;
   display: block;
   position: absolute;
-}
-
-#score, #paused, #lines {
-  color: white;
-  text-align: center;
 }
 
 #player {
@@ -63,4 +57,22 @@ footer {
   display: flex;
   flex-direction: column;
   gap: 0.5em;
+}
+
+#play, #paused {
+  padding: 0.5rem 5rem;
+  border-radius: 5px;
+  border: none;
+  
+  background: #883677;
+  opacity: 0.9;
+  color: inherit;
+  font-size: 1.5rem;
+  text-align: center;
+
+  box-shadow: 2px 2px 2px 1px rgb(0 0 255 / 20%)
+}
+
+#play:hover {
+  opacity: 1;
 }
