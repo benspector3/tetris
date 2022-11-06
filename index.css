@@ -17,7 +17,7 @@ body > * {
 }
 
 body {
-  background-color: #441151;
+  background-color: #211151;
   color: #FF958C;
   text-align: center;
 
@@ -29,10 +29,13 @@ body {
 
 #board {
   position: relative;
+  background-color: #883677;
+  box-sizing: content-box;
+  border: 10px solid black;
 }
 
 .arena-square {
-  border: 1px solid grey;
+  border: 1px solid black;
   display: block;
   position: absolute;
 }
@@ -43,15 +46,6 @@ body {
   user-select: none;
 }
 
-#paused {
-  display: none;
-  position: absolute;
-  top: 25%;
-  left: 50%;
-  /* bring your own prefixes */
-  transform: translate(-50%, -50%);
-}
-
 footer {
   display: flex;
   flex-direction: column;
@@ -59,7 +53,7 @@ footer {
 }
 
 button, #paused {
-  padding: 0.5rem 5rem;
+  padding: 0.5rem;
   border-radius: 5px;
   border: none;
   
@@ -78,4 +72,15 @@ button, #paused {
 
 #play:hover, #pause:hover {
   opacity: 1;
+}
+
+#paused {
+  display: none;
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  /* bring your own prefixes */
+  transform: translate(-50%, -50%);
+
+  background: #211151;
 }

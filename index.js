@@ -17,7 +17,7 @@ gameInfo.hide();
 
 // Constant Variables
 const COLORS = [
-  '#000000',
+  '#a858282',
   '#FF0D72',
   '#0DC2FF',
   '#0DFF72',
@@ -315,7 +315,9 @@ function clearLines() {
         for (let y = 0; y < arena[x].length; y++) {
           const value = arena[x - 1][y].value;
           arena[x][y].value = value;
-          arena[x][y].element.css('background-color', COLORS[value]);
+          if (value !== 0) {
+            arena[x][y].element.css('background-color', COLORS[value]);
+          }
         }
       }
       
@@ -384,8 +386,7 @@ function getEmptyArena() {
     for (let c = 0; c < COLUMNS; c++) {
       const additionalProps = {
         'left': c * getSquareSize(),
-        'top': r * getSquareSize(),
-        'background-color': "black"
+        'top': r * getSquareSize()
       }
       const emptyArenaSquare = makeArenaSquare(additionalProps);
       arena[r][c] = { element: emptyArenaSquare, value : 0 };
